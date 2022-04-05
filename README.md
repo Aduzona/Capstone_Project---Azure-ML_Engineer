@@ -1,19 +1,31 @@
-*NOTE:* This file is a template that you can use to create the README for your project. The *TODO* comments below will highlight the information you should be sure to include.
+# Predicting mortality by heart failure using Microsoft Azure
+An Udacity Project part of the Machine Learning Engineer with Microsoft Azure Nanodegree program. 
+I will start by getting the Heart failure dataset into Azure datastore, then create 2 models, one using AutoML and the other using HyperDrive,Compare there performance, Deploy Best Model and Test Model End Point.
 
-# Your Project Title Here
+[capstone diagram](images/0_capstone-diagram.png)
 
-*TODO:* Write a short introduction to your project.
 
 ## Project Set Up and Installation
 *OPTIONAL:* If your project has any special installation steps, this is where you should put it. To turn this project into a professional portfolio project, you are encouraged to explain how to set up this project in AzureML.
 
+Using my Azure account, I created a machine learning workspace within a Resource group.
+[Workspace](images/1_Create_a_resource_and_workspace.png)
+
+Then within Azure ML studio, I have to provision a compute instance Standard_DS3_v2(4 cores,14GB RAM, 28GB storage, cost $0.27/hr)
+
+Next is I created a Notebook,then cloned starter files from github repository via Azure Machine Learning CLI terminal
+[clone from github](images/2_Clone_files_from_github.png)
+
 ## Dataset
+
 
 ### Overview
 *TODO*: Explain about the data you are using and where you got it from.
+Heart failure is a common event caused by Cardiovascular diseases (CVDs) dataset contains 12 features that can be used to predict mortality by heart failure.[source kaggle](https://www.kaggle.com/datasets/andrewmvd/heart-failure-clinical-data)
 
 ### Task
 *TODO*: Explain the task you are going to be solving with this dataset and the features you will be using for it.
+This is a binary classification problem to predict "DEATH_EVENT". 
 
 ### Access
 *TODO*: Explain how you are accessing the data in your workspace.
@@ -46,3 +58,9 @@
 
 ## Standout Suggestions
 *TODO (Optional):* This is where you can provide information about any standout suggestions that you have attempted.
+
+## References
+
+1. [Udacity ML Engineer for microsoft azure nanodegree](https://www.udacity.com/course/machine-learning-engineer-for-microsoft-azure-nanodegree--nd00333)
+2. [Kaggle Dataset](https://www.kaggle.com/datasets/andrewmvd/heart-failure-clinical-data)
+3. 
