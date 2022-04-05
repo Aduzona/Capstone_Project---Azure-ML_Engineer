@@ -2,19 +2,19 @@
 An Udacity Project part of the Machine Learning Engineer with Microsoft Azure Nanodegree program. 
 I will start by getting the Heart failure dataset into Azure datastore, then create 2 models, one using AutoML and the other using HyperDrive,Compare there performance, Deploy Best Model and Test Model End Point.
 
-[capstone diagram](images/0_capstone-diagram.png)
+![capstone diagram](images/0_capstone-diagram.png)
 
 
 ## Project Set Up and Installation
 *OPTIONAL:* If your project has any special installation steps, this is where you should put it. To turn this project into a professional portfolio project, you are encouraged to explain how to set up this project in AzureML.
 
 Using my Azure account, I created a machine learning workspace within a Resource group.
-[Workspace](images/1_Create_a_resource_and_workspace.png)
+![Workspace](images/1_Create_a_resource_and_workspace.png)
 
 Then within Azure ML studio, I have to provision a compute instance Standard_DS3_v2(4 cores,14GB RAM, 28GB storage, cost $0.27/hr)
 
 Next is I created a Notebook,then cloned starter files from github repository via Azure Machine Learning CLI terminal
-[clone from github](images/2_Clone_files_from_github.png)
+![clone from github](images/2_Clone_files_from_github.png)
 
 ## Dataset
 
