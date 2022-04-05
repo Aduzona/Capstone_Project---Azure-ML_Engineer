@@ -105,11 +105,14 @@ automl_config = AutoMLConfig(compute_target=training_cluster,
 
 ### Results
 *TODO*: What are the results you got with your automated ML model? What were the parameters of the model? How could you have improved it?
+
+**AutoML results**
+
 After runing the AutoML model for 15 minutes, Result shows weighted AUC and Accuracy.
 
 |AUC|Accuracy|
 |--|--|
-|AUC: 0.952|0.88|
+|0.952|0.88|
 
 This result above can be improved by increasing the experiment timeout minutes parameter in `AutoMLConfig`.
 
@@ -152,18 +155,193 @@ Time is the most important feature for predicting death by heart failure with fe
 ## Hyperparameter Tuning
 *TODO*: What kind of model did you choose for this experiment and why? Give an overview of the types of parameters and their ranges used for the hyperparameter search
 
+**Model for this experiment**
+
+I used Adaboost classifier with decision Tree classifier as it's base model.
+
+```python
+model = AdaBoostClassifier(base_estimator = DecisionTreeClassifier(max_depth=3),random_state=42,learning_rate=args.learning_rate,n_estimators=args.n_estimators).fit(X_train, y_train)
+```
+`max_depth` was limited to  3, to avoid overfitting.
+
+reason for using adaboost with decision tree classiers is that  AdaBoost is best used to boost the performance of decision trees on binary classification problems[Source:AdaBoost for Machine Learning](https://machinelearningmastery.com/boosting-and-adaboost-for-machine-learning/)
+
+
+**Types of parameters**
+
+I optimized for 2 parameters in AdaBoostClassier which are learning rate and number of estimators.
+
+These parameters are defined within a search space, learning rate was  defined with continous hyperparameters using uniform distribution ranging from 0.05 to 0.1. while number of estimators was defined with discrete hyperparameters using a choice which provides list of 4 values for tuning.
+For hyperparameter tuning using Azure hyperdrive,
+
+```python
+RandomParameterSampling(
+    {
+        # Hyperdrive will try combinations, adding these as script arguments
+        '--learning_rate': uniform(0.05, 0.1),
+        '--n_estimators' : choice(50,75,100,150)
+    }
+```
+Random sampling handles the defined search space by selecting parameters at random while mixing learning rate and number of estimators parameters.
 
 ### Results
 *TODO*: What are the results you got with your model? What were the parameters of the model? How could you have improved it?
 
+* hyperdrive results
+
 |AUC|Accuracy|
 |--|--|
-|AUC: 0.927|0.83|
+|0.927|0.83|
 
-*TODO* Remeber to provide screenshots of the `RunDetails` widget as well as a screenshot of the best model trained with it's parameters.
+* parameters of the model.
+
+|learning_rate|n_estimators|
+|--|--|
+|0.08078531408967735|75|
+
+* How to improve.
+    * Using Bayesian sampling which considers the previous parameter performance before making another selection.
+    * Increasing the search space with Grid sampling can help but this can take more time.
+    * compare various different base algorithms for AdaBoostClassifier like logistic regression,decision tree, SVC and select the best.
+
+RunDetals going through different parameters
+![RunDetails](images/6_Hyperdrive_RunDetails.png)
+
+Best Model with parameters
+![Best Model](images/7_Hyperdrive_Best_Model.png)
+
+Best Models registered
+![Registered Model](images/9_Registered_Models.png)
 
 ## Model Deployment
+
 *TODO*: Give an overview of the deployed model and instructions on how to query the endpoint with a sample input.
+
+AutoML model was deployed as it has the higher metrics for both AUC and Accuracy.
+
+|Trained with|AUC|Accuracy|
+|--|--|--|
+|AutoML|0.952|0.88|
+|HyperDrive|0.927|0.83|
+
+The Model will be deployed as a service consist of: entry_script and environment:
+* Entry_script loads the model and return predictions when data is submitted.
+* environment is here the script will run. 
+[source: Microsoft Learn Deploy Model](https://docs.microsoft.com/en-us/learn/modules/register-and-deploy-model-with-amls/2-deploy-model)
+
+score.py which is the entry script consists mainly of 2 functions,init() which load the model from the model registry and run(raw_data) generates predictions from the input data.
+
+In Microsoft Azure Machine Learning Studio,the score file was downloaded from `experiment->Child runs->click on the latest child runs->Outputs + logs ->outputs/scoring_file_v_1_0_0.py`
+
+```python
+#best_run, fitted_model = remote_run.get_output()
+
+script_file_name = 'inference/score.py'
+#download file from our latest run from outputs/scoring_file_v_1_0_0.py to inference/score.py
+best_run.download_file("outputs/scoring_file_v_1_0_0.py",script_file_name)
+```
+
+
+The environment is where the service to run th entry script. I downloaded conda environment file
+```python
+## Use the below to prevent the 'No usable environment found' error
+## download a yml file
+from azureml.core.environment import Environment
+from azureml.automl.core.shared import constants
+
+# download from conda environment and save to myenv.yml
+best_run.download_file(constants.CONDA_ENV_FILE_PATH, 'myenv.yml')
+
+# create an Environment instance
+myenv = Environment.from_conda_specification(name="myenv", file_path="myenv.yml")
+```
+
+The endpoint service should be deployed with specific compute configuration
+```python
+from azureml.core.webservice import AciWebservice,Webservice
+from azureml.core.model import InferenceConfig
+from azureml.core.model import Model
+from azureml.core.environment import Environment
+
+inference_config = InferenceConfig(entry_script=script_file_name ,environment=myenv)
+
+# What kind of configuration will our endpoint be hosted on?
+deployment_config = AciWebservice.deploy_configuration(cpu_cores = 2, memory_gb = 4,description="Heart failure classification")
+
+service_name = "heart-service"
+
+service = Model.deploy(ws, service_name, [model], inference_config, deployment_config,overwrite=True)
+
+service.wait_for_deployment(True)
+print(service.state)
+```
+AutoML endpoint healthy
+![AutoML endpoint Active](images/10_AutoML_Model_endpoint_Active.png)
+
+**Query endpoint**
+
+Before querying a model endpoint, we have to extract the endpoint.
+Then define content type, 
+
+```python
+
+import requests
+import urllib.request
+import json
+
+endpoint = service.scoring_uri
+#list of data
+x_new=train_ds.to_pandas_dataframe().iloc[0:3,0:12]
+
+# Convert the array to a serializable list in a JSON document)
+input_json=str.encode(json.dumps({'data': x_new.to_dict(orient='records')}))
+
+# Set the content type
+headers = { 'Content-Type':'application/json' }
+
+req = urllib.request.Request(endpoint, input_json, headers = headers)
+
+try:
+    response = urllib.request.urlopen(req)
+
+    result = response.read()
+    print(result)
+except urllib.error.HTTPError as error:
+    print("The request failed with status code: " + str(error.code))
+
+    # Print the headers - they include the requert ID and the timestamp, which are useful for debugging the failure
+    print(error.info())
+    print(error.read().decode("utf8", 'ignore'))
+
+```
+
+Alternatively tools like postman can be useful in seeing how endpoints are consumed.
+
+![Setting Header](images/12_0_Setting_Header.png)
+
+The input data for the heart failure dataset is provided in json format.
+
+```json
+{
+    "data":[
+        {
+        "age":75,
+        "anaemia":0,
+        "creatinine_phosphokinase":582,
+        "diabetes":0,
+        "ejection_fraction":20, 
+        "high_blood_pressure":1, 
+        "platelets":265000,
+        "serum_creatinine":1.9, 
+        "serum_sodium":130, 
+        "sex":1, 
+        "smoking":0, 
+        "time":4
+        }
+    ]
+  }
+```
+![Consume Endpoint](images/12_consume_Endpoint_Postman.png)
 
 ## Screen Recording
 *TODO* Provide a link to a screen recording of the project in action. Remember that the screencast should demonstrate:
@@ -174,6 +352,32 @@ Time is the most important feature for predicting death by heart failure with fe
 ## Standout Suggestions
 *TODO (Optional):* This is where you can provide information about any standout suggestions that you have attempted.
 
+**Application Insight**
+
+```python
+
+from azureml.core import Workspace
+from azureml.core.webservice import Webservice
+
+# Requires the config to be downloaded first to the current working directory
+ws = Workspace.from_config()
+
+# Set with the deployment name
+name = "heart-service"
+
+# load existing web service
+service = Webservice(name=name, workspace=ws)
+
+# enable application insight
+service.update(enable_app_insights=True)
+
+logs = service.get_logs()
+
+for line in logs.split('\n'):
+    print(line)
+```
+![Application insight enabled](images/11_Rest_Endpoint_and_Application_Insights_enabled.png)
+
 ## References
 
 1. [Udacity ML Engineer for microsoft azure nanodegree](https://www.udacity.com/course/machine-learning-engineer-for-microsoft-azure-nanodegree--nd00333)
@@ -181,3 +385,10 @@ Time is the most important feature for predicting death by heart failure with fe
 3. [Register Dataset](https://github.com/MicrosoftLearning/mslearn-dp100/blob/main/06%20-%20Work%20with%20Data.ipynb)
 4. [AutoMLConfig](https://docs.microsoft.com/en-us/python/api/azureml-train-automl-client/azureml.train.automl.automlconfig.automlconfig?view=azure-ml-py)
 5. [OVR vs OVO](https://machinelearningmastery.com/one-vs-rest-and-one-vs-one-for-multi-class-classification/)
+6. [Microsoft Learn AutoML](https://github.com/MicrosoftLearning/mslearn-dp100/blob/main/12%20-%20Use%20Automated%20Machine%20Learning.ipynb)
+7. [Microsoft Learn Tune hyperparameters](https://docs.microsoft.com/en-us/learn/modules/tune-hyperparameters-with-azure-machine-learning/)
+8. [AdaBoost for Machine Learning](https://machinelearningmastery.com/boosting-and-adaboost-for-machine-learning/)
+9. [Video Register and Deploy Model](https://youtu.be/5P9VjdaV8J4)
+10. [Git Register and Deploy Model](https://github.com/jwood803/AzureMLExamples/blob/master/Register%20and%20Deploy.ipynb)
+11. [Microsoft Learn Deploy Model](https://docs.microsoft.com/en-us/learn/modules/register-and-deploy-model-with-amls/2-deploy-model)
+12. [Real time inference service](https://github.com/MicrosoftLearning/mslearn-dp100/blob/main/09%20-%20Create%20a%20Real-time%20Inferencing%20Service.ipynb)
