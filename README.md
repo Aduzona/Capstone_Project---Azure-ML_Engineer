@@ -341,6 +341,41 @@ The input data for the heart failure dataset is provided in json format.
 
 [Screen recording](https://youtu.be/FyO7d5RUqPw)
 
+**Hyperparameters**
+
+* Data Transformation
+```json
+{
+    "class_name": "MaxAbsScaler",
+    "module": "sklearn.preprocessing",
+    "param_args": [],
+    "param_kwargs": {},
+    "prepared_kwargs": {},
+    "spec_class": "preproc"
+}
+```
+
+* Training Algorithm
+```json
+{
+    "class_name": "RandomForestClassifier",
+    "module": "sklearn.ensemble",
+    "param_args": [],
+    "param_kwargs": {
+        "bootstrap": true,
+        "class_weight": "balanced",
+        "criterion": "gini",
+        "max_features": "log2",
+        "min_samples_leaf": 0.06157894736842105,
+        "min_samples_split": 0.10368421052631578,
+        "n_estimators": 25,
+        "oob_score": true
+    },
+    "prepared_kwargs": {},
+    "spec_class": "sklearn"
+}
+
+```
 ## Standout Suggestions
 
 **Application Insight**
