@@ -6,7 +6,6 @@ I will start by getting the Heart failure dataset into Azure datastore, then cre
 
 
 ## Project Set Up and Installation
-*OPTIONAL:* If your project has any special installation steps, this is where you should put it. To turn this project into a professional portfolio project, you are encouraged to explain how to set up this project in AzureML.
 
 Using my Azure account, I created a machine learning workspace within a Resource group.
 ![Workspace](images/1_Create_a_resource_and_workspace.png)
@@ -20,7 +19,7 @@ Next is I created a Notebook,then cloned starter files from github repository vi
 
 
 ### Overview
-*TODO*: Explain about the data you are using and where you got it from.
+
 Heart failure is a common event caused by Cardiovascular diseases (CVDs) dataset contains 12 features that can be used to predict mortality by heart failure.[source kaggle](https://www.kaggle.com/datasets/andrewmvd/heart-failure-clinical-data)
 
 ### Task
@@ -28,7 +27,7 @@ Heart failure is a common event caused by Cardiovascular diseases (CVDs) dataset
 This is a binary classification problem to predict "DEATH_EVENT". 
 
 ### Access
-*TODO*: Explain how you are accessing the data in your workspace.
+
 The csv data from kaggle was uploaded to Azure datastore. then I created a tabular dataset on the datastore, before registering the tabular dataset.
 
 ```python
@@ -104,7 +103,6 @@ automl_config = AutoMLConfig(compute_target=training_cluster,
 ```
 
 ### Results
-*TODO*: What are the results you got with your automated ML model? What were the parameters of the model? How could you have improved it?
 
 **AutoML results**
 
@@ -153,7 +151,6 @@ Time is the most important feature for predicting death by heart failure with fe
 ![Feature Importance](images/5_2_BestModel_Important_Features.png)
 
 ## Hyperparameter Tuning
-*TODO*: What kind of model did you choose for this experiment and why? Give an overview of the types of parameters and their ranges used for the hyperparameter search
 
 **Model for this experiment**
 
@@ -185,7 +182,6 @@ RandomParameterSampling(
 Random sampling handles the defined search space by selecting parameters at random while mixing learning rate and number of estimators parameters.
 
 ### Results
-*TODO*: What are the results you got with your model? What were the parameters of the model? How could you have improved it?
 
 * hyperdrive results
 
@@ -214,8 +210,6 @@ Best Models registered
 ![Registered Model](images/9_Registered_Models.png)
 
 ## Model Deployment
-
-*TODO*: Give an overview of the deployed model and instructions on how to query the endpoint with a sample input.
 
 AutoML model was deployed as it has the higher metrics for both AUC and Accuracy.
 
@@ -344,13 +338,10 @@ The input data for the heart failure dataset is provided in json format.
 ![Consume Endpoint](images/12_consume_Endpoint_Postman.png)
 
 ## Screen Recording
-*TODO* Provide a link to a screen recording of the project in action. Remember that the screencast should demonstrate:
-- A working model
-- Demo of the deployed  model
-- Demo of a sample request sent to the endpoint and its response
+
+[Screen recording](https://youtu.be/FyO7d5RUqPw)
 
 ## Standout Suggestions
-*TODO (Optional):* This is where you can provide information about any standout suggestions that you have attempted.
 
 **Application Insight**
 
